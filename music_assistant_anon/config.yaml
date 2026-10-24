@@ -1,0 +1,46 @@
+name: Music Assistant (Boombox + Mixtape)
+version: 2.10.8-boombox.1
+slug: music_assistant_anon
+description: >
+  Music Assistant with two extra providers baked in: Boombox (public YouTube
+  Music) and Mixtape (Spotify catalog with YouTube audio). Fork of the upstream
+  music_assistant add-on, mirrors every setting except the slug/name.
+url: https://music-assistant.io
+arch:
+  - amd64
+  - aarch64
+homeassistant_api: true
+hassio_api: true
+hassio_role: manager
+discovery:
+  - music_assistant
+auth_api: true
+host_network: true
+ingress: true
+ingress_port: 8094
+audio: true
+panel_icon: mdi:music-assistant
+panel_title: Music Assistant (fork)
+panel_admin: false
+uart: false
+apparmor: false
+map:
+  - media:rw
+  - ssl:ro
+init: false
+backup_exclude:
+  - cache.db
+  - collage_images/*
+  - .cache/*
+  - library.db.backup
+stage: stable
+tmpfs: true
+options:
+  log_level: info
+  safe_mode: false
+schema:
+  log_level: list(debug|info|warning|error)
+  safe_mode: bool
+privileged:
+  - SYS_ADMIN
+  - DAC_READ_SEARCH

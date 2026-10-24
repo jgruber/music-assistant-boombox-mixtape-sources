@@ -1,0 +1,6 @@
+# Base image used when the Supervisor builds this add-on locally.
+# We pin to the exact MA server image version that matches `version:` in config.yaml;
+# bump both together when the upstream MA release moves.
+build_from:
+  amd64: ghcr.io/music-assistant/server:2.10.8
+  aarch64: ghcr.io/music-assistant/server:2.10.8
