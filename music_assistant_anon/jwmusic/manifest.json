@@ -8,5 +8,5 @@
   "documentation": "https://github.com/jgruber/music-assistant-jwmusic",
   "stage": "alpha",
   "multi_instance": false,
-  "icon": "music-note-eighth"
+  "icon": "music-note"
 }
