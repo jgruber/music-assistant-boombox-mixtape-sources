@@ -37,10 +37,13 @@ CATALOG_CACHE_TTL_SECONDS: Final[int] = 86_400
 #: credit the site itself uses.
 PUBLISHER: Final[str] = "Jehovah's Witnesses"
 
-#: Mirror of jw.org/en/library/music-songs/ top-level entries, in the order
-#: they appear on the page as of 2026-10. The pub code is what the API uses.
+#: Mirror of jw.org/en/library/music-songs/ top-level entries that have an
+#: MP3 release, in the order they appear on the page as of 2026-10. The
+#: parent "Sing Out Joyfully to Jehovah" and "Sing to Jehovah" / "Sing to
+#: Jehovah — New Songs" entries are printed-songbook publications and have
+#: no audio of their own — their audio releases are the `sjjm/sjjc/sjji`
+#: and `snv` siblings respectively, which are included below.
 CATEGORIES: Final[tuple[Category, ...]] = (
-    Category("sjj", '"Sing Out Joyfully" to Jehovah'),
     Category("sjjm", '"Sing Out Joyfully" to Jehovah — Meetings'),
     Category("sjjc", '"Sing Out Joyfully" to Jehovah — Vocals'),
     Category("sjji", '"Sing Out Joyfully" to Jehovah — Instrumental'),
@@ -52,8 +55,6 @@ CATEGORIES: Final[tuple[Category, ...]] = (
     Category("gnjst2", "The Good News According to Jesus — Soundtrack 2"),
     Category("gnjst3", "The Good News According to Jesus — Soundtrack 3"),
     Category("cywst", '"Commit Your Way to Jehovah" — Soundtrack'),
-    Category("sn", "Sing to Jehovah"),
-    Category("snnw", "Sing to Jehovah — New Songs"),
     Category("snv", "Sing to Jehovah — Chorus"),
 )
 

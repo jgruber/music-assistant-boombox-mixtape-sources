@@ -9,6 +9,7 @@ are what we encode into Music Assistant item ids.
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -172,8 +173,24 @@ class CatalogCache:
             return album
 
     async def get_many(self, pubs: list[str]) -> list[JwAlbum]:
-        """Fetch many publications concurrently."""
-        return await asyncio.gather(*(self.get(p) for p in pubs))
+        """Fetch many publications concurrently; skip pubs whose fetch fails.
+
+        A single pub-media endpoint returning 404 (the publication has no MP3
+        release, or jw.org retired it) must not take down the whole browse.
+        We log at WARNING and drop that one pub from the returned list.
+        """
+        results = await asyncio.gather(
+            *(self.get(p) for p in pubs), return_exceptions=True
+        )
+        out: list[JwAlbum] = []
+        for pub, result in zip(pubs, results, strict=True):
+            if isinstance(result, BaseException):
+                logging.getLogger("music_assistant.jwmusic").warning(
+                    "Skipping publication %r — fetch failed: %s", pub, result
+                )
+                continue
+            out.append(result)
+        return out
 
     def invalidate(self) -> None:
         """Drop all cached entries (operator-visible via a provider reload)."""
