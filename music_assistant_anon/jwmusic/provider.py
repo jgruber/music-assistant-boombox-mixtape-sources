@@ -104,14 +104,19 @@ class JwMusicProvider(MusicProvider):
         # path format: "<provider_instance_id>://..."
         _, _, sub = path.partition("://")
         if not sub or sub.strip("/") == "" or sub.strip("/") == "albums":
-            return [self._album_to_item_mapping(c.pub, c.name) for c in CATEGORIES]
+            # Return full Album objects (not ItemMappings) so album_type and
+            # artwork render in the row. Albums are fetched concurrently and
+            # cached, so later browses are instant.
+            albums = await self._cache().get_many([c.pub for c in CATEGORIES])
+            return [self._album_full(a) for a in albums]
         parts = sub.strip("/").split("/")
         if len(parts) >= 2 and parts[0] == "albums":
             pub = parts[1]
             album = await self._cache().get(pub)
             return [self._track_item(album, t) for t in album.tracks]
         # unknown subpath — show the top-level listing
-        return [self._album_to_item_mapping(c.pub, c.name) for c in CATEGORIES]
+        albums = await self._cache().get_many([c.pub for c in CATEGORIES])
+        return [self._album_full(a) for a in albums]
 
     # ---------- search ----------
 

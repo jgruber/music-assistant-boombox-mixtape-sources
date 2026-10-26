@@ -82,10 +82,17 @@ def _parse_entry(pub: str, index: int, entry: dict) -> JwTrack | None:
         candidate = track_image.get("url")
         if isinstance(candidate, str) and candidate:
             image_url = candidate
+    # Some publications (International Music is one) report docid=0 for every
+    # track, so we fall back to the track number for a stable per-track id.
+    # The "t" prefix keeps the two id spaces apart so a future docid=42 and a
+    # track-number 42 never collide.
+    track_number = _parse_int(entry.get("track"), default=index)
+    raw_docid = entry.get("docid")
+    docid = str(raw_docid) if raw_docid else f"t{track_number}"
     return JwTrack(
         pub=pub,
-        docid=str(entry.get("docid") or ""),
-        track_number=_parse_int(entry.get("track"), default=index),
+        docid=docid,
+        track_number=track_number,
         title=str(entry.get("title") or "").strip(),
         url=url,
         duration=_parse_duration(entry.get("duration")),
