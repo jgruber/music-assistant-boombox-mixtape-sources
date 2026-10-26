@@ -57,4 +57,4 @@ LABEL \
   io.hass.name="Music Assistant (Boombox + Mixtape)" \
   io.hass.description="Music Assistant with the Boombox and Mixtape providers baked in" \
   io.hass.type="addon" \
-  io.hass.version="2.10.8-boombox.3"
+  io.hass.version="2.10.8-boombox.4"

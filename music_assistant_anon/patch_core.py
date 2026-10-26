@@ -8,9 +8,11 @@ before deploy, not at runtime.
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from dataclasses import dataclass
+from typing import Any
 
 import music_assistant  # resolves the real site-packages path
 
@@ -18,6 +20,8 @@ MA_PKG = os.path.dirname(music_assistant.__file__)
 CTRL_MUSIC = os.path.join(MA_PKG, "controllers", "music", "controller.py")
 CTRL_STREAMS = os.path.join(MA_PKG, "controllers", "streams", "controller.py")
 CONSTANTS = os.path.join(MA_PKG, "constants.py")
+STREAMS_STRINGS = os.path.join(MA_PKG, "controllers", "streams", "strings.json")
+EN_JSON = os.path.join(MA_PKG, "translations", "en.json")
 
 
 @dataclass(frozen=True)
@@ -237,6 +241,71 @@ EDITS: tuple[Edit, ...] = (
 )
 
 
+# ---------------------------------------------------------------------------
+# JSON-level additions for the publish_base_url config entry.
+#
+# strings.json is where upstream would carry the entry's human text; MA ships
+# a pre-baked translations/en.json built at release time by a repo-only script
+# that walks strings.json. The installed package only loads en.json, so we
+# write both: strings.json for upstream shape, en.json for actual UI effect.
+# ---------------------------------------------------------------------------
+
+PUBLISH_BASE_URL_LABEL = "Published base URL"
+PUBLISH_BASE_URL_DESCRIPTION = (
+    "Optional override of the base URL used in stream URLs handed to players.\n\n"
+    "Set this when the stream server sits behind a reverse proxy that terminates "
+    "TLS and/or exposes it on a different hostname or port (for example "
+    "`https://musicstream.example.com`). Players that require an HTTPS, "
+    "publicly-reachable URL to fetch audio (such as an Amazon Echo via a custom "
+    "skill) will not play unless this is set to a URL they can reach.\n\n"
+    "Leave empty (the default) to build URLs from the Published IP and bind "
+    "port — Music Assistant's traditional behavior. The server itself always "
+    "binds HTTP on the configured bind IP/port; TLS termination happens "
+    "upstream in the reverse proxy.\n\n"
+    "Must include the scheme (`http://` or `https://`), must not include a "
+    "path (other than `/`), query, or fragment, and must not end with a slash."
+)
+
+
+def patch_streams_strings_json() -> int:
+    """Insert the publish_base_url entry into streams/strings.json."""
+    with open(STREAMS_STRINGS, encoding="utf-8") as f:
+        data = json.load(f)
+    entries = data.setdefault("config_entries", {})
+    desired = {
+        "label": PUBLISH_BASE_URL_LABEL,
+        "description": PUBLISH_BASE_URL_DESCRIPTION,
+    }
+    if entries.get("publish_base_url") == desired:
+        print(f"patch_core: already applied in {STREAMS_STRINGS}")
+        return 0
+    entries["publish_base_url"] = desired
+    with open(STREAMS_STRINGS, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print(f"patch_core: applied JSON update in {STREAMS_STRINGS}")
+    return 0
+
+
+def patch_en_json() -> int:
+    """Insert the publish_base_url label+description into translations/en.json."""
+    with open(EN_JSON, encoding="utf-8") as f:
+        catalogue: dict[str, Any] = json.load(f)
+    desired = {
+        "core.streams.config_entries.publish_base_url.label": PUBLISH_BASE_URL_LABEL,
+        "core.streams.config_entries.publish_base_url.description": PUBLISH_BASE_URL_DESCRIPTION,
+    }
+    if all(catalogue.get(k) == v for k, v in desired.items()):
+        print(f"patch_core: already applied in {EN_JSON}")
+        return 0
+    catalogue.update(desired)
+    with open(EN_JSON, "w", encoding="utf-8") as f:
+        json.dump(catalogue, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print(f"patch_core: applied JSON update in {EN_JSON}")
+    return 0
+
+
 def apply_edit(edit: Edit) -> int:
     with open(edit.file, encoding="utf-8") as f:
         src = f.read()
@@ -268,6 +337,8 @@ def main() -> int:
     rc = 0
     for edit in EDITS:
         rc |= apply_edit(edit)
+    rc |= patch_streams_strings_json()
+    rc |= patch_en_json()
     return rc
 
 
