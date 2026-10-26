@@ -49,7 +49,7 @@ def main() -> int:
 
     changed = 0
     for provider_dir in sorted((PKG_DIR / "providers").iterdir()):
-        if provider_dir.name not in {"ytmusic_anon", "spotify"}:
+        if provider_dir.name not in {"ytmusic_anon", "spotify", "jwmusic"}:
             continue
         strings_path = provider_dir / "strings.json"
         if not strings_path.exists():

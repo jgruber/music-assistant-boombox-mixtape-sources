@@ -26,6 +26,7 @@ RUN set -eux; \
 # doesn't silently break us.
 COPY ytmusic_anon /tmp/ytmusic_anon
 COPY spotify /tmp/spotify
+COPY jwmusic /tmp/jwmusic
 RUN set -eux; \
     PROVIDERS_DIR="$(/app/venv/bin/python3 -c 'import music_assistant, os; print(os.path.dirname(music_assistant.__file__))')/providers"; \
     test -d "$PROVIDERS_DIR"; \
@@ -37,8 +38,9 @@ RUN set -eux; \
     rm -rf "$PROVIDERS_DIR/spotify"; \
     cp -r /tmp/ytmusic_anon "$PROVIDERS_DIR/"; \
     cp -r /tmp/spotify "$PROVIDERS_DIR/"; \
-    rm -rf /tmp/ytmusic_anon /tmp/spotify; \
-    ls -la "$PROVIDERS_DIR/ytmusic_anon" "$PROVIDERS_DIR/spotify"
+    cp -r /tmp/jwmusic "$PROVIDERS_DIR/"; \
+    rm -rf /tmp/ytmusic_anon /tmp/spotify /tmp/jwmusic; \
+    ls -la "$PROVIDERS_DIR/ytmusic_anon" "$PROVIDERS_DIR/spotify" "$PROVIDERS_DIR/jwmusic"
 
 # Patch MA core: _search_shareable_url ignores the caller's media_types, so the
 # UI's per-section search calls each receive the resolved item and the frontend
@@ -54,7 +56,7 @@ COPY patch_translations.py /tmp/patch_translations.py
 RUN /app/venv/bin/python3 /tmp/patch_translations.py && rm /tmp/patch_translations.py
 
 LABEL \
-  io.hass.name="Music Assistant (Boombox + Mixtape)" \
-  io.hass.description="Music Assistant with the Boombox and Mixtape providers baked in" \
+  io.hass.name="Music Assistant (Boombox + Mixtape + JW.org Music)" \
+  io.hass.description="Music Assistant with the Boombox, Mixtape and JW.org Music providers baked in" \
   io.hass.type="addon" \
-  io.hass.version="2.10.8-boombox.2"
+  io.hass.version="2.10.8-boombox.3"
