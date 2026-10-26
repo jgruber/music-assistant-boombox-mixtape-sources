@@ -59,4 +59,4 @@ LABEL \
   io.hass.name="Music Assistant (Boombox + Mixtape + JW.org Music)" \
   io.hass.description="Music Assistant with the Boombox, Mixtape and JW.org Music providers baked in" \
   io.hass.type="addon" \
-  io.hass.version="2.10.8-boombox.6"
+  io.hass.version="2.10.8-boombox.7"

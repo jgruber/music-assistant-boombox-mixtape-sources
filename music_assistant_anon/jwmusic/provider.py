@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from music_assistant.models.music_provider import MusicProvider
 from music_assistant_models.enums import (
+    AlbumType,
     ContentType,
     ImageType,
     MediaType,
@@ -25,7 +26,6 @@ from music_assistant_models.enums import (
 from music_assistant_models.errors import MediaNotFoundError
 from music_assistant_models.media_items import (
     Album,
-    AlbumType,
     Artist,
     AudioFormat,
     BrowseFolder,
