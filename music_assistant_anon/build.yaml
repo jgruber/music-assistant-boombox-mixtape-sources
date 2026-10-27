@@ -1,6 +1,6 @@
-# Base image used when the Supervisor builds this add-on locally.
-# We pin to the exact MA server image version that matches `version:` in config.yaml;
-# bump both together when the upstream MA release moves.
+# Base image is now the jgruber fork of Music Assistant server, which bakes in the three
+# providers and all the related code changes. :latest tracks the fork's main branch head;
+# bump to an explicit :vX.Y.Z or :main-<sha> for reproducible rollouts.
 build_from:
-  amd64: ghcr.io/music-assistant/server:2.10.8
-  aarch64: ghcr.io/music-assistant/server:2.10.8
+  amd64: ghcr.io/jgruber/music-assistant-server:latest
+  aarch64: ghcr.io/jgruber/music-assistant-server:latest
