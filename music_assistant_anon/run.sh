@@ -55,22 +55,27 @@ for entry in $PROVIDERS; do
     rm -rf "$tmp"
 done
 
-# ---------- 2. Install bootstrap plugin manifest requirements ----------
+# ---------- 2. Install EVERY custom provider's manifest requirements ----------
 #
-# MA pip-installs a provider's requirements on first-time UI configuration,
-# not on every start. Any provider dropped into custom_providers by this
-# script bypasses the first-time flow, so install its requirements here.
-# Only the bootstrap plugin's own deps run here; providers installed by the
-# installer plugin itself pip-install from within the plugin's setup.
+# The MA venv (/app/venv) lives in the container's writable layer, so it is
+# wiped on every Supervisor rebuild/restart. The installer plugin pip-installs
+# its own fetches, but that runs during MA's plugin init — after MA has
+# already walked and imported the music/metadata/player providers. A provider
+# that needs a non-stdlib dep (spotapi, ytmusicapi, …) will ModuleNotFoundError
+# on the first boot after any container restart.
+#
+# Fix: before MA starts, walk every /data/custom_providers/*/manifest.json and
+# install the union of their 'requirements' into /app/venv. The installer
+# plugin's own pip-install stays as a safety net (and the authoritative one
+# when a provider gets added mid-session).
 
 REQS="$(mktemp)"
 : >"$REQS"
 if [ -x "$UV" ]; then
-    for dir in $(echo "$PROVIDERS" | awk -F: 'NF {print $2}'); do
-        manifest="$CUSTOM_PROVIDERS_DIR/$dir/manifest.json"
+    for manifest in "$CUSTOM_PROVIDERS_DIR"/*/manifest.json; do
         [ -f "$manifest" ] || continue
         "$VENV/bin/python3" -c "
-import json, sys
+import json
 with open('$manifest') as f:
     m = json.load(f)
 for r in m.get('requirements', []) or []:
@@ -79,14 +84,14 @@ for r in m.get('requirements', []) or []:
     done
     awk '!seen[$0]++' "$REQS" >"${REQS}.dedup" && mv "${REQS}.dedup" "$REQS"
     if [ -s "$REQS" ]; then
-        echo "[addon-run] installing bootstrap-plugin requirements:"
+        echo "[addon-run] installing custom-provider requirements:"
         sed 's/^/[addon-run]   /' "$REQS"
         if ! "$UV" pip install --python "$VENV/bin/python3" --quiet -r "$REQS"; then
             echo "[addon-run] WARN: uv pip install failed"
         fi
     fi
 else
-    echo "[addon-run] WARN: $UV not found; cannot install bootstrap-plugin requirements"
+    echo "[addon-run] WARN: $UV not found; cannot install custom-provider requirements"
 fi
 rm -f "$REQS"
 

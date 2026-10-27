@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.10.8-fork.5
+
+Pip-install every custom provider's manifest requirements at container
+start, not just the bootstrap plugin's.
+
+`/app/venv` lives in the container's writable layer, so a Supervisor
+restart wipes any package the installer plugin pip-installed earlier.
+With fork.4, the installer plugin re-installed those packages during
+plugin init on the next boot — but MA had already walked and imported
+every music/metadata/player provider by that point, so one that needed
+a non-stdlib dep (spotapi, ytmusicapi, …) hit `ModuleNotFoundError` on
+the first boot after any container restart.
+
+`run.sh` now walks `/data/custom_providers/*/manifest.json` and
+installs the union of their `requirements` into `/app/venv` BEFORE
+chaining to the Music Assistant entrypoint. The installer plugin's own
+pip-install stays as the authoritative one for providers added mid-
+session.
+
 ## 2.10.8-fork.4
 
 Switch the add-on to a generic shape: it no longer opinionates on which

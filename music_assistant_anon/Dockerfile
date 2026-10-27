@@ -20,4 +20,4 @@ LABEL \
   io.hass.name="Music Assistant Server (jgruber fork)" \
   io.hass.description="jgruber/music-assistant-server fork pre-staged with the Custom Provider Installer plugin" \
   io.hass.type="addon" \
-  io.hass.version="2.10.8-fork.4"
+  io.hass.version="2.10.8-fork.5"
