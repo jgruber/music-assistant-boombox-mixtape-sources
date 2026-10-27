@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.10.8-fork.4
+
+Switch the add-on to a generic shape: it no longer opinionates on which
+custom providers to install.
+
+- `run.sh` now bootstraps only the Custom Provider Installer plugin
+  ([jgruber/music-assistant-provider-installer](https://github.com/jgruber/music-assistant-provider-installer)).
+- Any additional custom provider (music, player, metadata, audio analysis,
+  plugin) is installed through the plugin's config UI, by adding its
+  GitHub repository URL.
+- Existing custom providers under `/data/custom_providers/<domain>/`
+  (Boombox, Mixtape, JW.org Music if you had them) are not removed — they
+  continue to load normally. If you want them managed by the installer
+  plugin going forward (auto-updates on container start), add their URLs
+  to the plugin's config.
+- Rename: the add-on's display name is now "Music Assistant Server
+  (jgruber fork)". The slug is unchanged, so `/data` and all your state
+  carry over without migration.
+
 ## 2.10.8-fork.3
 
 Install each custom provider's `requirements` from its manifest into the

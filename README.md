@@ -1,37 +1,59 @@
-# Music Assistant with Boombox, Mixtape and JW.org Music providers
+# Music Assistant Server (jgruber fork) — Home Assistant add-on
 
-A Home Assistant add-on repository that ships a single add-on:
-
-- **`music_assistant_anon/`** — a Home Assistant wrapper around [`ghcr.io/jgruber/music-assistant-server`](https://github.com/jgruber/music-assistant-server), the clean soft fork of upstream [Music Assistant](https://music-assistant.io). The fork image is upstream MA plus a HACS-style custom-providers loader; this add-on's job is to install three specific custom providers at container start:
-  - **Boombox**: public YouTube Music. Browses, searches and plays what any logged-out visitor to music.youtube.com would see, resolved to playable URLs with yt-dlp. No Google account needed.
-  - **Mixtape**: Spotify catalog, YouTube audio. Reads open.spotify.com's public web catalog for search and playlist metadata, and plays audio from YouTube using the same pipeline as Boombox. Does not retrieve or play audio from Spotify, and does not require or substitute for a Spotify account. **Replaces the upstream Spotify provider** (same domain), so this is for users without a Spotify Premium subscription.
-  - **JW.org Music**: public music catalog from jw.org/library/music-songs. Mirrors each top-level publication (Sing Out Joyfully and its variants, Original Songs, Sing to Jehovah, International Music, and more) as a browsable album and plays each track from the official MP3 URL the site serves on its public download pages. No account required.
-
-The fork also carries a HACS-style custom-providers mechanism (see [`docs/custom_providers.md`](https://github.com/jgruber/music-assistant-server/blob/main/docs/custom_providers.md) in the fork repo) and a `CONF_PUBLISH_BASE_URL` config entry for operators running the stream server behind a TLS-terminating reverse proxy.
+A Home Assistant add-on wrapper for
+[`jgruber/music-assistant-server`](https://github.com/jgruber/music-assistant-server),
+the soft fork of upstream Music Assistant with a HACS-style custom-providers
+loader. The add-on's only job is to deliver the fork image with the
+[Custom Provider Installer plugin](https://github.com/jgruber/music-assistant-provider-installer)
+pre-staged, so an operator can install any custom provider from a GitHub
+URL through the plugin's config UI once Music Assistant is up.
 
 ## Installation
 
-1. In Home Assistant: **Settings → Add-ons → Add-on Store → ⋮ (top right) → Repositories**.
+1. Settings → Add-ons → Add-on Store → ⋮ (top right) → **Repositories**.
 2. Paste `https://github.com/jgruber/music-assistant-server-addon` and click **Add**.
-3. Close the dialog, scroll down to the new section.
-4. Open **Music Assistant (Boombox + Mixtape + JW.org Music)** and **Install**. First install pulls the fork's prebuilt image from GHCR; expect 2–5 minutes.
-5. Start the add-on. In the Music Assistant UI, go to **Settings → Music sources → Add Music source** and pick **Boombox**, **Mixtape**, or **JW.org Music**.
+3. Open **Music Assistant Server (jgruber fork)** → **Install** → **Start**.
+4. In the Music Assistant UI, go to **Settings → Providers → Add plugin**
+   and pick **Custom Provider Installer**.
+5. In the installer's config, add one or more GitHub repository URLs. Each
+   entry is `https://github.com/owner/repo`, optionally with a
+   `@branch-or-tag` suffix. Save, then **restart Music Assistant** to
+   activate the newly-installed providers.
 
-## Relationship to the upstream Music Assistant add-on
+## Relationship to upstream Music Assistant
 
-This add-on uses a different `slug` (`music_assistant_anon` vs upstream `music_assistant`), so it runs as a **separate add-on** with its own `/data` volume. The upstream add-on is unaffected — you can keep both installed, though they will fight over `ingress_port: 8094` on the host network, so run only one at a time.
+Different slug (`music_assistant_anon` vs upstream's `music_assistant`), so
+this add-on runs independently with its own `/data`. Both can be installed
+side by side, but they contend for `ingress_port: 8094`; run only one at a
+time.
 
-**Important**: this add-on's base image is the jgruber fork, not upstream Music Assistant. It replaces the upstream Spotify provider with Mixtape. If you have a Spotify Premium subscription and want to use the official Spotify provider, use the upstream add-on, not this one.
+## What's in the add-on
+
+- **Base image**: `ghcr.io/jgruber/music-assistant-server:latest`. Upstream
+  Music Assistant plus three generic additions — a HACS-style
+  custom-providers loader, `CONF_PUBLISH_BASE_URL` for reverse-proxy
+  installs, and the URL-search filter fix from upstream PR #7228. No music
+  providers of its own.
+- **Startup script**: fetches
+  [`jgruber/music-assistant-provider-installer`](https://github.com/jgruber/music-assistant-provider-installer)
+  into `/data/custom_providers/provider_installer/` on every start and
+  `uv pip install`s its manifest requirements. Nothing else.
 
 ## Keeping in sync
 
 Two layers can move independently:
 
-- **Fork image** (`ghcr.io/jgruber/music-assistant-server:latest`) — rebuilt on every push to the fork's `main` branch. The add-on pulls this on **Rebuild** or on the Supervisor's regular cadence.
-- **Provider sources** — each of the three providers lives in its own GitHub repo and is fetched into `/data/custom_providers/` by the add-on's `run.sh` on *every* container start. To pick up a provider update, just restart the add-on; the next run syncs. No image rebuild needed.
-
-Manual version bump of the add-on wrapper: edit `version:` in [`music_assistant_anon/config.yaml`](./music_assistant_anon/config.yaml) and the matching `io.hass.version` LABEL in the Dockerfile.
+- **Fork image** (`ghcr.io/jgruber/music-assistant-server:latest`) — rebuilt
+  on every push to the fork's `main` branch. The add-on pulls this on
+  **Rebuild** or on the Supervisor's regular cadence.
+- **Installer plugin sources** — fetched into `/data/custom_providers/` by
+  the add-on's `run.sh` on *every* container start. Restart the add-on to
+  pick up a plugin update; no image rebuild needed.
+- **Custom providers you added through the installer plugin** — the plugin
+  re-fetches each configured URL on every setup. Restart Music Assistant
+  (or save the plugin's config) to pick up a provider update.
 
 ## License
 
-Add-on wrapper: Apache 2.0 (same as upstream Music Assistant). Fork image carries its own LICENSE at the fork repo.
+Add-on wrapper: Apache 2.0 (same as upstream Music Assistant). Fork image
+and installer plugin carry their own LICENSE in their own repos.

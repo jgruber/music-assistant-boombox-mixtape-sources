@@ -1,13 +1,14 @@
 #!/bin/sh
-# Install/refresh the three custom providers this add-on opinionates on, into
-# the custom_providers directory the fork's mechanism scans at startup, then
-# install each one's manifest requirements into Music Assistant's venv.
+# Install/refresh the Custom Provider Installer plugin into the fork's
+# custom_providers directory, then hand off to Music Assistant.
 #
-# Fail soft: a network outage or a 404 keeps the existing dir in place and
-# never blocks Music Assistant from starting. The fork image is upstream
-# Music Assistant plus the custom-providers loader; this script is what makes
-# "the Boombox + Mixtape + JW.org Music add-on" different from the generic
-# fork image.
+# This add-on's whole job is to deliver the fork image with the installer
+# plugin pre-staged. Operators pick any additional custom providers they
+# want through the installer plugin's config UI once Music Assistant is
+# up — the add-on takes no position on which providers to install.
+#
+# Fail soft: a network outage keeps the existing plugin dir in place and
+# never blocks Music Assistant from starting.
 set -eu
 
 CUSTOM_PROVIDERS_DIR=/data/custom_providers
@@ -16,14 +17,13 @@ UV="$VENV/bin/uv"
 mkdir -p "$CUSTOM_PROVIDERS_DIR"
 
 # repo:provider_domain:branch_or_tag
-# Pin a specific tag per repo if you want reproducible installs.
+# Only the installer plugin is bootstrapped here; everything else is the
+# operator's choice through the installer's UI.
 PROVIDERS="
-music-assistant-boombox:ytmusic_anon:main
-music-assistant-mixtape:spotify:main
-music-assistant-jwmusic:jwmusic:main
+music-assistant-provider-installer:provider_installer:main
 "
 
-# ---------- 1. Sync provider sources ----------
+# ---------- 1. Sync bootstrap plugin(s) ----------
 
 for entry in $PROVIDERS; do
     [ -z "$entry" ] && continue
@@ -55,21 +55,19 @@ for entry in $PROVIDERS; do
     rm -rf "$tmp"
 done
 
-# ---------- 2. Install each custom provider's manifest requirements ----------
+# ---------- 2. Install bootstrap plugin manifest requirements ----------
 #
-# MA pip-installs a provider's requirements when the user adds it via the UI
-# the first time, not on every start. For a fresh install (empty venv), or
-# for a provider installed by this script (bypassing the UI flow), we have
-# to install the requirements ourselves. Idempotent — uv reuses the resolved
-# versions on subsequent runs.
-#
-# Collect requirements from every manifest, dedupe, then one uv pip install
-# call so network cost is paid once per start.
+# MA pip-installs a provider's requirements on first-time UI configuration,
+# not on every start. Any provider dropped into custom_providers by this
+# script bypasses the first-time flow, so install its requirements here.
+# Only the bootstrap plugin's own deps run here; providers installed by the
+# installer plugin itself pip-install from within the plugin's setup.
 
 REQS="$(mktemp)"
 : >"$REQS"
 if [ -x "$UV" ]; then
-    for manifest in "$CUSTOM_PROVIDERS_DIR"/*/manifest.json; do
+    for dir in $(echo "$PROVIDERS" | awk -F: 'NF {print $2}'); do
+        manifest="$CUSTOM_PROVIDERS_DIR/$dir/manifest.json"
         [ -f "$manifest" ] || continue
         "$VENV/bin/python3" -c "
 import json, sys
@@ -79,24 +77,18 @@ for r in m.get('requirements', []) or []:
     print(r)
 " >>"$REQS" || true
     done
-    # Dedupe while preserving order
     awk '!seen[$0]++' "$REQS" >"${REQS}.dedup" && mv "${REQS}.dedup" "$REQS"
     if [ -s "$REQS" ]; then
-        echo "[addon-run] installing custom-provider requirements:"
+        echo "[addon-run] installing bootstrap-plugin requirements:"
         sed 's/^/[addon-run]   /' "$REQS"
         if ! "$UV" pip install --python "$VENV/bin/python3" --quiet -r "$REQS"; then
-            echo "[addon-run] WARN: uv pip install failed — Music Assistant may skip providers whose deps are missing"
+            echo "[addon-run] WARN: uv pip install failed"
         fi
-    else
-        echo "[addon-run] no custom-provider requirements to install"
     fi
 else
-    echo "[addon-run] WARN: $UV not found; cannot install custom-provider requirements"
+    echo "[addon-run] WARN: $UV not found; cannot install bootstrap-plugin requirements"
 fi
 rm -f "$REQS"
 
 # ---------- 3. Chain to the fork image's entrypoint ----------
-#
-# The fork image sets LD_PRELOAD for jemalloc and then execs mass with the
-# CMD args we pass through here.
 exec /usr/local/bin/entrypoint.sh "$@"
