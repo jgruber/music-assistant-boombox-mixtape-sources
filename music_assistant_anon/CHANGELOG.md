@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.10.8-fork.3
+
+Install each custom provider's `requirements` from its manifest into the
+Music Assistant venv on container start. Music Assistant pip-installs
+provider requirements on first-time UI configuration, not on subsequent
+restarts, so a provider installed by this add-on's `run.sh` would fail to
+import on restart if its deps aren't already in the venv — Mixtape hit this
+on `2.10.8-fork.2` with `ModuleNotFoundError: No module named 'spotapi'`.
+
 ## 2.10.8-fork.2
 
 Switch to the clean-fork pattern: the three providers now install at
