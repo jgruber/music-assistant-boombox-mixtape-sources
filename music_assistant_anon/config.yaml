@@ -1,12 +1,13 @@
 name: Music Assistant (Boombox + Mixtape + JW.org Music)
-version: 2.10.8-fork.1
+version: 2.10.8-fork.2
 slug: music_assistant_anon
 description: >
-  Music Assistant with three extra providers baked in: Boombox (public YouTube
-  Music), Mixtape (Spotify catalog with YouTube audio), and JW.org Music
-  (public music catalog from jw.org). Built on ghcr.io/jgruber/music-assistant-server
-  (soft fork of music-assistant/server); mirrors every setting of the upstream
-  music_assistant add-on except the slug/name.
+  Music Assistant with three extra providers auto-installed as custom
+  providers on every start: Boombox (public YouTube Music), Mixtape
+  (Spotify catalog with YouTube audio), and JW.org Music (public music
+  catalog from jw.org). Built on ghcr.io/jgruber/music-assistant-server
+  (soft fork of music-assistant/server with a HACS-style custom-providers
+  loader).
 url: https://music-assistant.io
 arch:
   - amd64

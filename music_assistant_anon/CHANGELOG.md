@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.10.8-fork.2
+
+Switch to the clean-fork pattern: the three providers now install at
+container start as *custom providers*, rather than being baked into the
+base image.
+
+- The fork image (`ghcr.io/jgruber/music-assistant-server`) is now upstream
+  Music Assistant plus a HACS-style custom-providers loader, with no music
+  providers of its own. The upstream Spotify provider is restored.
+- A new `run.sh` fetches the three provider repos (`jgruber/music-assistant-boombox`,
+  `-mixtape`, `-jwmusic`) into `/data/custom_providers/` on every start, so
+  the three providers auto-update to the latest release of each repo and
+  a fresh install (empty `/data`) still gets them.
+- The `spotify` custom provider (Mixtape) shadows upstream's Spotify provider
+  because they claim the same `domain`. The custom-providers loader emits a
+  WARNING on the shadow — operators who want Premium stay on upstream MA.
+- Note: this release pulls the full fork image again (~1–2 GB per arch).
+
 ## 2.10.8-fork.1
 
 Rebase the add-on onto the `ghcr.io/jgruber/music-assistant-server` fork image

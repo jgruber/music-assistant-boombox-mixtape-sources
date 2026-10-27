@@ -2,7 +2,7 @@
 
 A Home Assistant add-on repository that ships a single add-on:
 
-- **`music_assistant_anon/`** — a Home Assistant wrapper around [`ghcr.io/jgruber/music-assistant-server`](https://github.com/jgruber/music-assistant-server), the soft fork of upstream [Music Assistant](https://music-assistant.io) that bakes in three music providers:
+- **`music_assistant_anon/`** — a Home Assistant wrapper around [`ghcr.io/jgruber/music-assistant-server`](https://github.com/jgruber/music-assistant-server), the clean soft fork of upstream [Music Assistant](https://music-assistant.io). The fork image is upstream MA plus a HACS-style custom-providers loader; this add-on's job is to install three specific custom providers at container start:
   - **Boombox**: public YouTube Music. Browses, searches and plays what any logged-out visitor to music.youtube.com would see, resolved to playable URLs with yt-dlp. No Google account needed.
   - **Mixtape**: Spotify catalog, YouTube audio. Reads open.spotify.com's public web catalog for search and playlist metadata, and plays audio from YouTube using the same pipeline as Boombox. Does not retrieve or play audio from Spotify, and does not require or substitute for a Spotify account. **Replaces the upstream Spotify provider** (same domain), so this is for users without a Spotify Premium subscription.
   - **JW.org Music**: public music catalog from jw.org/library/music-songs. Mirrors each top-level publication (Sing Out Joyfully and its variants, Original Songs, Sing to Jehovah, International Music, and more) as a browsable album and plays each track from the official MP3 URL the site serves on its public download pages. No account required.
@@ -25,7 +25,10 @@ This add-on uses a different `slug` (`music_assistant_anon` vs upstream `music_a
 
 ## Keeping in sync
 
-The fork's Docker image at `ghcr.io/jgruber/music-assistant-server:latest` is rebuilt on every push to the fork's `main` branch. To pick up a new fork image, open the add-on in HA and click **Rebuild** (or let the Supervisor pull on its usual cadence).
+Two layers can move independently:
+
+- **Fork image** (`ghcr.io/jgruber/music-assistant-server:latest`) — rebuilt on every push to the fork's `main` branch. The add-on pulls this on **Rebuild** or on the Supervisor's regular cadence.
+- **Provider sources** — each of the three providers lives in its own GitHub repo and is fetched into `/data/custom_providers/` by the add-on's `run.sh` on *every* container start. To pick up a provider update, just restart the add-on; the next run syncs. No image rebuild needed.
 
 Manual version bump of the add-on wrapper: edit `version:` in [`music_assistant_anon/config.yaml`](./music_assistant_anon/config.yaml) and the matching `io.hass.version` LABEL in the Dockerfile.
 
