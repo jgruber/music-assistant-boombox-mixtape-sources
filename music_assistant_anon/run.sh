@@ -95,5 +95,39 @@ else
 fi
 rm -f "$REQS"
 
-# ---------- 3. Chain to the fork image's entrypoint ----------
+# ---------- 3. Overlay the forked frontend ----------
+#
+# The MA server imports music_assistant_frontend as a pip package. The
+# jgruber/music-assistant-frontend fork patches ConfigEntryField.vue so
+# multi_value STRING entries render as individual inputs instead of a
+# combobox+chips (the installer plugin's repositories list depends on
+# this UX). The fork ships the built dist as a release asset — fetch
+# the latest one and overlay the venv's music_assistant_frontend
+# package in place. The container's writable layer is wiped on every
+# restart, so this runs each start.
+
+FRONTEND_PKG_DIR="$VENV/lib/python3.14/site-packages/music_assistant_frontend"
+FRONTEND_URL="https://github.com/jgruber/music-assistant-frontend/releases/latest/download/frontend-dist.tgz"
+if [ -d "$FRONTEND_PKG_DIR" ]; then
+    tmp_fe="$(mktemp -d)"
+    echo "[addon-run] overlaying forked frontend from ${FRONTEND_URL}"
+    if wget -q -O "$tmp_fe/frontend-dist.tgz" "$FRONTEND_URL"; then
+        # keep __init__.py and py.typed (the package stubs); replace everything else
+        find "$FRONTEND_PKG_DIR" -maxdepth 1 -mindepth 1 \
+            ! -name __init__.py ! -name py.typed -exec rm -rf {} +
+        if tar -xzf "$tmp_fe/frontend-dist.tgz" -C "$FRONTEND_PKG_DIR" \
+               --exclude __init__.py --exclude py.typed; then
+            echo "[addon-run]   ok"
+        else
+            echo "[addon-run]   WARN: frontend tarball failed to extract"
+        fi
+    else
+        echo "[addon-run]   WARN: fetch failed for ${FRONTEND_URL} — keeping bundled frontend"
+    fi
+    rm -rf "$tmp_fe"
+else
+    echo "[addon-run] WARN: ${FRONTEND_PKG_DIR} not found; cannot overlay frontend"
+fi
+
+# ---------- 4. Chain to the fork image's entrypoint ----------
 exec /usr/local/bin/entrypoint.sh "$@"

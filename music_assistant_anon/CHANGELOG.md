@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.10.8-fork.6
+
+Overlay the forked
+[`jgruber/music-assistant-frontend`](https://github.com/jgruber/music-assistant-frontend)
+build onto the Music Assistant venv on every container start, replacing
+the stock `music_assistant_frontend` package served by Music Assistant.
+
+The fork patches `ConfigEntryField.vue` so a `multi_value` STRING entry
+renders as individual inputs (one per existing value) with a per-row
+remove button, a trailing empty input, and an add button. On the stock
+upstream frontend the same entry renders as a `v-combobox`+chips. The
+Custom Provider Installer plugin's repositories list depends on this
+UX. `ConfigEntry.format`, previously used only by `PAIRING_CODE`, is
+reused as the per-input placeholder (template hint).
+
+The frontend tarball is fetched from the fork's "latest" GitHub release
+asset at `frontend-dist.tgz`. Fetch failures leave the stock bundled
+frontend in place and never block Music Assistant from starting.
+
 ## 2.10.8-fork.5
 
 Pip-install every custom provider's manifest requirements at container
