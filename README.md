@@ -12,7 +12,7 @@ The fork also carries a HACS-style custom-providers mechanism (see [`docs/custom
 ## Installation
 
 1. In Home Assistant: **Settings → Add-ons → Add-on Store → ⋮ (top right) → Repositories**.
-2. Paste `https://github.com/jgruber/music-assistant-boombox-mixtape-sources` and click **Add**.
+2. Paste `https://github.com/jgruber/music-assistant-server-addon` and click **Add**.
 3. Close the dialog, scroll down to the new section.
 4. Open **Music Assistant (Boombox + Mixtape + JW.org Music)** and **Install**. First install pulls the fork's prebuilt image from GHCR; expect 2–5 minutes.
 5. Start the add-on. In the Music Assistant UI, go to **Settings → Music sources → Add Music source** and pick **Boombox**, **Mixtape**, or **JW.org Music**.
